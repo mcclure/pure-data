@@ -4,11 +4,45 @@
 
 #include "s_fileops.h"
 
+static bool null_open(const char *path, t_fileops_flags flags, t_fileops_handle *handle) {
+    return false;
+}
+static bool null_close(t_fileops_handle handle) {
+    return false;
+}
+static bool null_stat(t_fileops_handle handle, t_fileops_stat *stat) {
+    return false;
+}
+static int64_t null_seek(t_fileops_handle handle, int64_t offset, t_fileops_flags flags) {
+    return 0;
+}
+static ssize_t null_read(t_fileops_handle handle, const void *buf, size_t nbyte) {
+    return 0;
+}
+static ssize_t null_write(t_fileops_handle handle, const void *buf, size_t nbyte) {
+    return 0;
+}
+static ssize_t null_scanf(t_fileops_handle handle, const char * restrict format, ...) {
+    return 0;
+}
+static ssize_t null_vscanf(t_fileops_handle handle, const char * restrict format, va_list ap) {
+    return 0;
+}
+static ssize_t null_printf(t_fileops_handle handle, const char * restrict format, ...) {
+    return 0;
+}
+static ssize_t null_vprintf(t_fileops_handle handle, const char * restrict format, va_list ap) {
+    return 0;
+}
+static bool null_flush(t_fileops_handle handle) {
+    return false;
+}
+
+t_fileops sys_fileops_null = {null_open, null_close, null_stat, null_seek, null_read, null_write, null_scanf, null_vscanf, null_printf, null_vprintf};
+
 #ifndef _PD_METAFILE_NO_DEFAULT
 
 #include <fcntl.h>
-
-t_fileops sys_fileops;
 
 // TODO delete this?
 #ifdef _LARGEFILE64_SOURCE
@@ -110,5 +144,75 @@ int sys_fclose(FILE *stream)
     return fclose(stream);
 }
 #endif
+
+static bool open(const char *path, t_fileops_flags flags, t_fileops_handle *handle) {
+    char mode[3];
+    int midx = 0;
+    if (flags & FILEOPS_READ)
+        mode[midx++] = 'r';
+    if (flags & FILEOPS_WRITE)
+        mode[midx++] = 'w';
+    if (!(flags & FILEOPS_CREAT))
+        mode[midx++] = 'x';
+    mode[midx++] = '\0';
+
+// IF BODY PD CODE
+#ifdef _WIN32
+    char namebuf[MAXPDSTRING];
+    wchar_t ucs2buf[MAXPDSTRING];
+    wchar_t ucs2mode[MAXPDSTRING];
+    sys_bashfilename(filename, namebuf);
+    u8_utf8toucs2(ucs2buf, MAXPDSTRING, namebuf, MAXPDSTRING-1);
+    /* mode only uses ASCII, so no need for a full conversion, just copy it */
+    mbstowcs(ucs2mode, mode, MAXPDSTRING);
+    FILE * f = _wfopen(ucs2buf, ucs2mode);
+#else
+  char namebuf[MAXPDSTRING];
+  sys_bashfilename(filename, namebuf);
+  FILE *f = fopen(namebuf, mode);
+#endif
+  *handle = (intptr_t)(void *)f;
+  return tobool(f);
+}
+static bool close(t_fileops_handle handle) {
+    FILE *f = (FILE *)(void *)handle;
+    int result = fclose(f);
+    return 0 == result;
+}
+static bool stat(t_fileops_handle handle, t_fileops_stat *stat) {
+
+}
+static int64_t seek(t_fileops_handle handle, int64_t offset, t_fileops_flags flags) {
+
+}
+static ssize_t read(t_fileops_handle handle, const void *buf, size_t nbyte) {
+
+}
+static ssize_t write(t_fileops_handle handle, const void *buf, size_t nbyte) {
+
+}
+static ssize_t scanf(t_fileops_handle handle, const char * restrict format, ...) {
+
+}
+static ssize_t vscanf(t_fileops_handle handle, const char * restrict format, va_list ap) {
+
+}
+static ssize_t printf(t_fileops_handle handle, const char * restrict format, ...) {
+
+}
+static ssize_t vprintf(t_fileops_handle handle, const char * restrict format, va_list ap) {
+
+}
+static bool flush(t_fileops_handle handle) {
+
+}
+
+t_fileops sys_fileops_standard = {std_open, std_close, std_stat, std_seek, std_read, std_write, std_scanf, std_vscanf, std_printf, std_vprintf};
+
+t_fileops sys_fileops = sys_fileops_standard;
+
+#else
+
+t_fileops sys_fileops = sys_fileops_null;
 
 #endif

@@ -8,7 +8,7 @@
 #include <stdbool.h>
 #include <stdarg.h>
 
-typedef uintptr_t t_fileops_handle;
+typedef intptr_t t_fileops_handle;
 
 typedef enum {
 	FILEOPS_NONE = 0,

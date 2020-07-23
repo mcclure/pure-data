@@ -75,10 +75,12 @@ typedef unsigned __int8   bool;
 #define false 0
 #define true 1
 #define PRIxPTR "p"
+#define tobool(x) ((x)?true:false)
 #else
 #include <stdint.h>
 #include <stdbool.h>
 #include <inttypes.h>
+#define tobool(x) ((bool)(x))
 #endif
 
 /* for FILE, needed by sys_fopen() and sys_fclose() only */

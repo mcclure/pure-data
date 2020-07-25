@@ -889,8 +889,8 @@ int binbuf_read_via_path(t_binbuf *b, const char *filename, const char *dirname,
 {
     t_fileops_handle filedesc;
     char buf[MAXPDSTRING], *bufptr;
-    if ((filedesc = open_via_path(
-        dirname, filename, "", buf, &bufptr, &filedesc, MAXPDSTRING, 0)) < 0)
+    if (!open_via_path(
+        dirname, filename, "", buf, &bufptr, &filedesc, MAXPDSTRING, 0))
     {
         error("%s: can't open", filename);
         return (1);

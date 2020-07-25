@@ -32,7 +32,7 @@ typedef struct _t_fileops /* All function pointers return true on success */
 	bool (*close)(t_fileops_handle handle);
 	bool (*stat)(t_fileops_handle handle, t_fileops_stat *stat);
 	int64_t (*seek)(t_fileops_handle handle, int64_t offset, t_fileops_flags flags);
-	ssize_t (*read)(t_fileops_handle handle, const void *buf, size_t nbyte);
+	ssize_t (*read)(t_fileops_handle handle, void *buf, size_t nbyte);
 	ssize_t (*write)(t_fileops_handle handle, const void *buf, size_t nbyte);
 	ssize_t (*scanf)(t_fileops_handle handle, const char * restrict format, ...);
 	ssize_t (*vscanf)(t_fileops_handle handle, const char * restrict format, va_list ap);

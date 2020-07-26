@@ -58,22 +58,38 @@ const t_fileops sys_fileops_null = FILEOPS_NULL_VALUES;
 #error TODO
 #endif
 
-// FIXME: This doesn't correctly recreate the O_CREAT behavior; a better way to do this would be fdopen/_fdopen
-static bool std_open(const char *path, t_fileops_flags flags, t_fileops_handle *handle) {
-    char mode[3];
+static void std_flags_to_fopen_string(char *mode, t_fileops_flags flags, bool *doreopen) {
     int midx = 0;
+    if (!(flags & (FILEOPS_WRITE | FILEOPS_READ)))
+        flags = flags | FILEOPS_WRITE | FILEOPS_READ;
     // CREAT does not mesh precisely with the fopen concept.
-    if ((flags & FILEOPS_READ) && !(flags & FILEOPS_CREAT)) {
+    if ((flags & FILEOPS_WRITE) && !(flags & FILEOPS_CREAT)) {
         mode[0] = 'r';
         mode[1] = '+';
         midx = 2;
+        if (doreopen)
+            *doreopen = true;
     } else {
-        if (flags & FILEOPS_READ)
-            mode[midx++] = 'r';
-        if (flags & FILEOPS_WRITE)
-            mode[midx++] = 'w';
+        if (flags & FILEOPS_READ) {
+            mode[midx] = 'r';
+            midx++;
+        }
+        if (flags & FILEOPS_WRITE) {
+            mode[midx] = midx>0?'+':'w';
+            midx++;
+        }
+        if (doreopen)
+            *doreopen = false;
     }
     mode[midx++] = '\0';
+}
+
+// FIXME: This doesn't correctly recreate the O_CREAT behavior; a better way to do this would be fdopen/_fdopen
+static bool std_open(const char *path, t_fileops_flags flags, t_fileops_handle *handle) {
+    char mode[3];
+    bool doreopen;
+
+    std_flags_to_fopen_string(mode, flags, &doreopen);
 
 // IF BODY PD CODE
 #ifdef _WIN32
@@ -90,6 +106,12 @@ static bool std_open(const char *path, t_fileops_flags flags, t_fileops_handle *
   sys_bashfilename(path, namebuf);
   FILE *f = fopen(namebuf, mode);
 #endif
+
+  if (f && doreopen) {
+    std_flags_to_fopen_string(mode, flags & ~(FILEOPS_CREAT), NULL);
+    f = freopen(path, mode, f);
+  }
+
   *handle = (intptr_t)(void *)f;
   return tobool(f);
 }
@@ -124,15 +146,15 @@ static int64_t std_seek(t_fileops_handle handle, int64_t offset, t_fileops_flags
         whence = SEEK_CUR;
     else if (flags & FILEOPS_SEEK_END)
         whence = SEEK_END;
-    return !fseek(f, offset, whence);
+    return fseek(f, offset, whence);
 }
 static ssize_t std_read(t_fileops_handle handle, void *buf, size_t nbyte) {
     FILE *f = SYS_FROMHANDLE(handle);
-    return !fread(buf, 1, nbyte, f);
+    return fread(buf, 1, nbyte, f);
 }
 static ssize_t std_write(t_fileops_handle handle, const void *buf, size_t nbyte) {
     FILE *f = SYS_FROMHANDLE(handle);
-    return !fwrite(buf, 1, nbyte, f);
+    return fwrite(buf, 1, nbyte, f);
 }
 static ssize_t std_scanf(t_fileops_handle handle, const char * restrict format, ...) {
     FILE *f = SYS_FROMHANDLE(handle);

@@ -838,7 +838,7 @@ int binbuf_read(t_binbuf *b, const char *filename, const char *dirname, int crfl
         close(fd);
         return(1);
     }
-    if ((readret = (int)read(fd, buf, length)) < length)
+    if ((readret = (int)sys_fileops.read(fd, buf, length)) < length)
     {
         fprintf(stderr, "read (%" PRIx64 " %ld) -> %d\n", (unsigned long long)fd, length, readret);
         perror(namebuf);

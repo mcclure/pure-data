@@ -1258,7 +1258,6 @@ static void soundfiler_read(t_soundfiler *x, t_symbol *s,
     char sampbuf[SAMPBUFSIZE];
     int bufframes;
     long nitems;
-    FILE *fp;
     info.samplerate = 0,
     info.channels = 0,
     info.bytespersample = 0,
@@ -1401,7 +1400,7 @@ static void soundfiler_read(t_soundfiler *x, t_symbol *s,
     {
         long thisread = finalsize - itemsread;
         thisread = (thisread > bufframes ? bufframes : thisread);
-        nitems = fread(sampbuf, info.channels * info.bytespersample, thisread, fp);
+        nitems = sys_fileops.read(fd, sampbuf, info.channels * info.bytespersample * thisread);
         if (nitems <= 0) break;
         soundfile_xferin_words(info.channels, argc, vecs, itemsread,
             (unsigned char *)sampbuf, nitems, info.bytespersample, info.bigendian);
@@ -1889,7 +1888,7 @@ static void *readsf_child_main(void *zz)
                 buf = x->x_buf;
                 fifohead = x->x_fifohead;
                 pthread_mutex_unlock(&x->x_mutex);
-                sysrtn = read(fd, buf + fifohead, wantbytes);
+                sysrtn = sys_fileops.read(fd, buf + fifohead, wantbytes);
                 pthread_mutex_lock(&x->x_mutex);
                 if (x->x_requestcode != REQUEST_BUSY)
                     break;

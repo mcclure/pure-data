@@ -146,7 +146,10 @@ static int64_t std_seek(t_fileops_handle handle, int64_t offset, t_fileops_flags
         whence = SEEK_CUR;
     else if (flags & FILEOPS_SEEK_END)
         whence = SEEK_END;
-    return fseek(f, offset, whence);
+    int64_t result = fseek(f, offset, whence);
+    if (result<0)
+        return -1;
+    return ftell(f);
 }
 static ssize_t std_read(t_fileops_handle handle, void *buf, size_t nbyte) {
     FILE *f = SYS_FROMHANDLE(handle);

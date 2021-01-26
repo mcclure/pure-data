@@ -585,6 +585,9 @@ static void soundfile_xferin_sample(int sfchannels, int nvecs, t_sample **vecs,
 
 }
 
+// Shift left while ensuring type widened correctly
+#define lshift(in, base) (in << base)
+
 static void soundfile_xferin_words(int sfchannels, int nvecs, t_word **vecs,
     long itemsread, unsigned char *buf, long nitems, int bytespersamp,
     int bigendian)
@@ -604,13 +607,13 @@ static void soundfile_xferin_words(int sfchannels, int nvecs, t_word **vecs,
             {
                 for (j = 0, sp2 = sp, wp = vecs[i] + itemsread;
                     j < nitems; j++, sp2 += bytesperframe, wp++)
-                        wp->w_float = SCALE * ((sp2[0] << 24) | (sp2[1] << 16));
+                        wp->w_float = SCALE * (lshift(sp2[0], 24) | (sp2[1] << 16));
             }
             else
             {
                 for (j = 0, sp2 = sp, wp = vecs[i] + itemsread;
                     j < nitems; j++, sp2 += bytesperframe, wp++)
-                        wp->w_float = SCALE * ((sp2[1] << 24) | (sp2[0] << 16));
+                        wp->w_float = SCALE * (lshift(sp2[1], 24) | (sp2[0] << 16));
             }
         }
         else if (bytespersample == 3)
@@ -619,14 +622,14 @@ static void soundfile_xferin_words(int sfchannels, int nvecs, t_word **vecs,
             {
                 for (j = 0, sp2 = sp, wp = vecs[i] + itemsread;
                     j < nitems; j++, sp2 += bytesperframe, wp++)
-                        wp->w_float = SCALE * ((sp2[0] << 24) | (sp2[1] << 16)
+                        wp->w_float = SCALE * (lshift(sp2[0], 24) | (sp2[1] << 16)
                             | (sp2[2] << 8));
             }
             else
             {
                 for (j = 0, sp2 = sp, wp = vecs[i] + itemsread;
                     j < nitems; j++, sp2 += bytesperframe, wp++)
-                        wp->w_float = SCALE * ((sp2[2] << 24) | (sp2[1] << 16)
+                        wp->w_float = SCALE * (lshift(sp2[2], 24) | (sp2[1] << 16)
                             | (sp2[0] << 8));
             }
         }
@@ -638,7 +641,7 @@ static void soundfile_xferin_words(int sfchannels, int nvecs, t_word **vecs,
                 for (j = 0, sp2 = sp, wp = vecs[i] + itemsread;
                     j < nitems; j++, sp2 += bytesperframe, wp++)
                 {
-                    alias.ui = ((sp2[0] << 24) | (sp2[1] << 16) |
+                    alias.ui = (lshift(sp2[0], 24) | (sp2[1] << 16) |
                                 (sp2[2] << 8)  |  sp2[3]);
                     wp->w_float = (t_float)alias.f;
                 }
@@ -648,7 +651,7 @@ static void soundfile_xferin_words(int sfchannels, int nvecs, t_word **vecs,
                 for (j = 0, sp2 = sp, wp = vecs[i] + itemsread;
                     j < nitems; j++, sp2 += bytesperframe, wp++)
                 {
-                    alias.ui = ((sp2[3] << 24) | (sp2[2] << 16) |
+                    alias.ui = (lshift(sp2[3], 24) | (sp2[2] << 16) |
                                 (sp2[1] << 8)  |  sp2[0]);
                     wp->w_float = (t_float)alias.f;
                 }

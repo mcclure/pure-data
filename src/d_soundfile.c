@@ -586,7 +586,7 @@ static void soundfile_xferin_sample(int sfchannels, int nvecs, t_sample **vecs,
 }
 
 // Shift left while ensuring type widened correctly
-#define lshift(in, base) (in << base)
+#define lshift(in, base) (((int32_t)(uint32_t)in) << base)
 
 static void soundfile_xferin_words(int sfchannels, int nvecs, t_word **vecs,
     long itemsread, unsigned char *buf, long nitems, int bytespersamp,
